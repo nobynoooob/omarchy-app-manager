@@ -10,50 +10,49 @@ cd "$SCRIPT_DIR" || exit 1
 echo "Omarchy App Manager"
 echo "==================="
 
-# Check if virtual environment exists
-if [ ! -d "venv" ]; then
-    echo "Error: Virtual environment not found!"
-    echo "Please run: python3 -m venv venv"
-    exit 1
+# Pick the interpreter: the bundled virtualenv when present, otherwise the
+# system python (the only runtime dependency is PyQt6, packaged on Arch as
+# python-pyqt6). A store-installed clone has no venv, so the fallback keeps
+# the bar widget working out of the box.
+PYTHON=""
+if [ -x "venv/bin/python3" ]; then
+    PYTHON="venv/bin/python3"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON="python3"
 fi
 
-# Activate virtual environment
-source venv/bin/activate
-
-# Verify PyQt6 is installed
-python3 -c "from PyQt6.QtWidgets import QApplication; print('✓ PyQt6 is available')" 2>/dev/null || {
+fail() {
+    # The bar widget spawns this detached, so a desktop notification is the
+    # only way to surface startup errors when stdout goes nowhere.
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send -u critical "Omarchy App Manager" "$1" 2>/dev/null
+    fi
     echo ""
-    echo "Error: PyQt6 not installed in virtual environment!"
-    echo "Please run: pip install PyQt6"
+    echo "Error: $1" >&2
     exit 1
 }
 
-# Verify omarchy_app_manager package is available
-python3 -c "
-import sys
-sys.path.insert(0, 'src')
-try:
-    import omarchy_app_manager.ui_mainwindow
-    print('✓ Omarchy App Manager package is available')
-except ImportError as e:
-    print(f'✗ Omarchy App Manager not available: {e}')
-    sys.exit(1)
-" 2>/dev/null || {
-    echo ""
-    echo "Error: Omarchy App Manager package not found!"
-    echo "Please install it with: pip install -e ."
-    exit 1
-}
+[ -n "$PYTHON" ] || fail "Python 3 not found. Install python3 and python-pyqt6."
+
+# Verify PyQt6 is available to the chosen interpreter
+if ! "$PYTHON" -c "from PyQt6.QtWidgets import QApplication" 2>/dev/null; then
+    if [ "$PYTHON" = "python3" ]; then
+        fail "PyQt6 not available. Install it with: sudo pacman -S python-pyqt6"
+    fi
+    fail "PyQt6 not installed in the virtual environment! Run: venv/bin/pip install PyQt6"
+fi
+
+# Verify the omarchy_app_manager package is importable
+PYTHONPATH="$SCRIPT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
+    "$PYTHON" -c "import omarchy_app_manager.ui_mainwindow" 2>/dev/null || \
+    fail "Omarchy App Manager package not found. Please install it with: pip install -e ."
 
 # Add src to Python path (SCRIPT_DIR was resolved at startup)
-export PYTHONPATH="$SCRIPT_DIR/src:$PYTHONPATH"
+export PYTHONPATH="$SCRIPT_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
 # Run the application
 echo ""
 echo "Starting Omarchy App Manager..."
 echo ""
-echo "If the window doesn't appear, it may be starting in the background."
-echo ""
 
-# Start the application
-python3 -m omarchy_app_manager
+exec "$PYTHON" -m omarchy_app_manager

@@ -190,11 +190,22 @@ def test_bar_widget_launches_the_startup_script_via_exec_detached():
 def test_startup_script_is_executable_and_self_locating():
     assert os.access(RUNNER_PATH, os.X_OK), 'run_final.sh must be executable'
     source = RUNNER_PATH.read_text(encoding='utf-8')
-    assert 'python3 -m omarchy_app_manager' in source
+    assert '-m omarchy_app_manager' in source
     # Invoked by absolute path from the bar widget: it must not depend on the
     # caller's working directory or on this developer's home folder.
     assert 'BASH_SOURCE' in source
     assert '/home/' not in source
+
+
+def test_startup_script_survives_a_venv_less_store_install():
+    """A git-installed clone has no venv (it is gitignored): the launcher must
+    fall back to the system interpreter (python-pyqt6) and surface startup
+    errors via notify-send, since the bar widget spawns it detached."""
+    source = RUNNER_PATH.read_text(encoding='utf-8')
+    assert 'venv/bin/python3' in source       # preferred when present
+    assert 'command -v python3' in source     # system fallback
+    assert 'notify-send' in source
+    assert 'pacman -S python-pyqt6' in source
 
 
 @requires_qmllint
