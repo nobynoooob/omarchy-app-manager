@@ -1,5 +1,5 @@
 """
-Omarchy App Manager - system-wide integration.
+OmaApp Manager - system-wide integration.
 
 Three opt-in integrations register the app itself with the desktop:
 
@@ -38,7 +38,7 @@ import time
 from pathlib import Path
 
 APP_ID = 'omarchy-app-manager'
-APP_NAME = 'Omarchy App Manager'
+APP_NAME = 'OmaApp Manager'
 APP_COMMENT = 'Manage AppImages and custom desktop shortcuts'
 APP_CATEGORIES = 'Utility;Settings;System;'
 
@@ -47,7 +47,7 @@ WAYBAR_MODULE_FILE = 'omarchy-appmanager.json'
 
 OMARCHY_WIDGET_GLYPH = '\U000F003B'  # nf-md-apps grid glyph
 OMARCHY_WIDGET_SECTION = 'left'
-OMARCHY_WIDGET_LABEL = 'Launch Omarchy App Manager'
+OMARCHY_WIDGET_LABEL = 'Launch OmaApp Manager'
 
 FIRST_RUN_DISABLE_ENV = 'OMARCHY_APPMANAGER_NO_FIRST_RUN'
 
@@ -352,16 +352,16 @@ def _plugin_manifest_text():
     manifest = {
         'schemaVersion': 1,
         'id': omarchy_plugin_id(),
-        'name': 'App Manager',
+        'name': 'OmaApp Manager',
         'version': '1.0.0',
         'author': omarchy_username(),
         'license': 'MIT',
-        'description': 'Launch Omarchy App Manager from the bar.',
+        'description': 'Launch OmaApp Manager from the bar.',
         'kinds': ['bar-widget'],
         'entryPoints': {'barWidget': 'BarWidget.qml'},
         'barWidget': {
-            'displayName': 'App Manager',
-            'description': 'Open the Omarchy App Manager',
+            'displayName': 'OmaApp Manager',
+            'description': 'Open the OmaApp Manager',
             'category': 'System',
             'allowMultiple': False,
             'defaultSection': OMARCHY_WIDGET_SECTION,

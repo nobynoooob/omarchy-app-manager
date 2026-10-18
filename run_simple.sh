@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Omarchy App Manager - Simple Launcher Script
+# OmaApp Manager - Simple Launcher Script
 
-echo "Omarchy App Manager"
+echo "OmaApp Manager"
 echo "==================="
 
 # Run the application directly with the virtual environment's python
@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, 'src')
 
 print('✓ Environment setup complete')
-print('✓ Omarchy App Manager starting...')
+print('✓ OmaApp Manager starting...')
 print('')
 print('Note: If the application window doesn\'t appear,')
 print('it may be starting in the background.')

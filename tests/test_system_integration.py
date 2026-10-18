@@ -106,7 +106,7 @@ def test_install_desktop_entry_writes_spec_fields(sandbox, tmp_path, monkeypatch
 
     assert desktop_file == integration.desktop_entry_path()
     content = desktop_file.read_text(encoding="utf-8")
-    assert "Name=Omarchy App Manager" in content
+    assert "Name=OmaApp Manager" in content
     assert "Comment=Manage AppImages and custom desktop shortcuts" in content
     assert "Terminal=false" in content
     assert "Categories=Utility;Settings;System;" in content
@@ -151,7 +151,7 @@ def test_waybar_module_written_with_expected_snippet(sandbox):
     assert list(data) == ["custom/app-manager"]
     module = data["custom/app-manager"]
     assert module["format"] == " \U000F003B "
-    assert module["tooltip-format"] == "Launch Omarchy App Manager"
+    assert module["tooltip-format"] == "Launch OmaApp Manager"
     assert module["on-click"] == integration.exec_line()
     # The Nerd Font glyph survives as a literal character, not an escape.
     assert "\U000F003B" in raw
@@ -180,7 +180,7 @@ def test_install_omarchy_widget_creates_plugin_and_layout_entry(sandbox, shell_c
 
     qml = (plugin_dir / "BarWidget.qml").read_text(encoding="utf-8")
     assert integration.omarchy_plugin_id() in qml
-    assert "Launch Omarchy App Manager" in qml
+    assert "Launch OmaApp Manager" in qml
     assert integration.get_launch_argv()[0] in qml
     assert "Quickshell.execDetached(" in qml
 
@@ -334,7 +334,7 @@ def test_copy_waybar_snippet_puts_json_on_clipboard(qapp, sandbox, monkeypatch):
 
     clipboard_text = QApplication.clipboard().text()
     assert "custom/app-manager" in clipboard_text
-    assert "Launch Omarchy App Manager" in clipboard_text
+    assert "Launch OmaApp Manager" in clipboard_text
 
 
 # --------------------------------------------------------------------------- #

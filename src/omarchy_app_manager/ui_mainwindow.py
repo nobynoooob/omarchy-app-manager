@@ -1,5 +1,5 @@
 """
-Omarchy App Manager - main window and widgets.
+OmaApp Manager - main window and widgets.
 
 Rice-grade visual layer: Catppuccin Mocha palette, unified QSS (see
 ``styles.py``), animated card hovers with a lavender glow, hover-only quick
@@ -2425,7 +2425,7 @@ class OmarchyAppManager(QMainWindow):
         self._refresh_integration_menu()
 
     def setup_ui(self):
-        self.setWindowTitle('Omarchy App Manager')
+        self.setWindowTitle('OmaApp Manager')
         self.resize(1180, 720)
         self.setMinimumSize(700, 480)
 
@@ -3076,7 +3076,7 @@ class OmarchyAppManager(QMainWindow):
                 integration.install_desktop_entry()
                 self._show_info(
                     'Applications Menu',
-                    'Omarchy App Manager was added to your applications menu.')
+                    'OmaApp Manager was added to your applications menu.')
             else:
                 integration.uninstall_desktop_entry()
                 # An explicit uncheck is also an opt-out: make sure the

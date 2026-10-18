@@ -1,5 +1,5 @@
 """
-Verification tests for the Omarchy App Manager desktop-entry backend.
+Verification tests for the OmaApp Manager desktop-entry backend.
 
 Run with:  python -m pytest tests/ -v
 

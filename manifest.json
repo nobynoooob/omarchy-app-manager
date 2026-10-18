@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "com.mostafa.omarchy-app-manager",
-  "name": "Omarchy App Manager",
+  "name": "OmaApp Manager",
   "version": "1.0.0",
   "author": "Mostafa Hossam El-Din",
   "description": "Fluid, high-performance AppImage and Desktop Shortcut manager with Catppuccin theme syncing, GameMode tuning, and icon auto-extraction.",
@@ -10,8 +10,8 @@
   "icon": "assets/omarchy-app-manager.svg",
   "homepage": "https://github.com/nobynoooob/omarchy-app-manager",
   "barWidget": {
-    "displayName": "App Manager",
-    "description": "Open the Omarchy App Manager",
+    "displayName": "OmaApp Manager",
+    "description": "Open the OmaApp Manager",
     "category": "System",
     "allowMultiple": false,
     "defaultSection": "left"

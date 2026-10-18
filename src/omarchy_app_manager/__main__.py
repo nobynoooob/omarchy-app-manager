@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Omarchy App Manager
+OmaApp Manager
 A modern, elegant desktop application for managing AppImages and shortcuts
 in the user's application menu (~/.local/share/applications/).
 """
@@ -12,7 +12,7 @@ from .ui_mainwindow import OmarchyAppManager
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("Omarchy App Manager")
+    app.setApplicationName("OmaApp Manager")
     app.setApplicationVersion("1.0.0")
 
     window = OmarchyAppManager()

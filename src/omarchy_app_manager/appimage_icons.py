@@ -1,5 +1,5 @@
 """
-Omarchy App Manager - AppImage icon extraction.
+OmaApp Manager - AppImage icon extraction.
 
 AppImages embed a SquashFS filesystem containing the application's desktop
 entry and icon artwork.  Their runtime answers ``--appimage-extract <pattern>``

@@ -1,5 +1,5 @@
 """
-Omarchy App Manager - visual design system.
+OmaApp Manager - visual design system.
 
 Single source of truth for the Catppuccin Mocha rice palette, the unified QSS
 stylesheet, and the animated-button color variants. Keeping this out of

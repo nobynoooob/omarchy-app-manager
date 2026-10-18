@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Omarchy App Manager - Final Launcher Script
+# OmaApp Manager - Final Launcher Script
 
 # Resolve the app folder from this script's location so the launcher works
 # from any working directory (the bar widget invokes it by absolute path).
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 cd "$SCRIPT_DIR" || exit 1
 
-echo "Omarchy App Manager"
+echo "OmaApp Manager"
 echo "==================="
 
 # Pick the interpreter: the bundled virtualenv when present, otherwise the
@@ -25,7 +25,7 @@ fail() {
     # The bar widget spawns this detached, so a desktop notification is the
     # only way to surface startup errors when stdout goes nowhere.
     if command -v notify-send >/dev/null 2>&1; then
-        notify-send -u critical "Omarchy App Manager" "$1" 2>/dev/null
+        notify-send -u critical "OmaApp Manager" "$1" 2>/dev/null
     fi
     echo ""
     echo "Error: $1" >&2
@@ -45,14 +45,14 @@ fi
 # Verify the omarchy_app_manager package is importable
 PYTHONPATH="$SCRIPT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
     "$PYTHON" -c "import omarchy_app_manager.ui_mainwindow" 2>/dev/null || \
-    fail "Omarchy App Manager package not found. Please install it with: pip install -e ."
+    fail "OmaApp Manager package not found. Please install it with: pip install -e ."
 
 # Add src to Python path (SCRIPT_DIR was resolved at startup)
 export PYTHONPATH="$SCRIPT_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
 # Run the application
 echo ""
-echo "Starting Omarchy App Manager..."
+echo "Starting OmaApp Manager..."
 echo ""
 
 exec "$PYTHON" -m omarchy_app_manager

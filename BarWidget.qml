@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Ui
 
-// Bar entry point for the Omarchy App Manager: a single launcher button.
+// Bar entry point for the OmaApp Manager: a single launcher button.
 // Left click spawns run_final.sh from the plugin folder, so the widget works
 // both from this checkout and from an installed copy under
 // ~/.config/omarchy/plugins/<id>/.
@@ -28,7 +28,7 @@ BarWidget {
     bar: root.bar
     text: "󰀻"
     fontFamily: "JetBrainsMono Nerd Font"
-    tooltipText: "Launch Omarchy App Manager"
+    tooltipText: "Launch OmaApp Manager"
     horizontalMargin: 8.5
     onPressed: function(buttonCode) {
       if (buttonCode === Qt.LeftButton)

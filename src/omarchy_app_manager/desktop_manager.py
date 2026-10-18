@@ -1,5 +1,5 @@
 """
-Omarchy App Manager - Desktop Entry backend.
+OmaApp Manager - Desktop Entry backend.
 
 Reads and writes freedesktop.org ``.desktop`` files in
 ``~/.local/share/applications/`` (overridable via the ``OMARCHY_APPS_DIR``

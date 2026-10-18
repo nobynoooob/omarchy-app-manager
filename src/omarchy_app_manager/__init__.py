@@ -1,5 +1,5 @@
 """
-Omarchy App Manager
+OmaApp Manager
 A modern, elegant desktop application for managing AppImages and shortcuts
 in the user's application menu (~/.local/share/applications/).
 """

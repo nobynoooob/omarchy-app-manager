@@ -1,5 +1,5 @@
 """
-UI regression tests for Omarchy App Manager.
+UI regression tests for OmaApp Manager.
 
 These run Qt offscreen so they work in a headless environment. They cover the
 refresh path that previously left stale/duplicated cards, the visual polish

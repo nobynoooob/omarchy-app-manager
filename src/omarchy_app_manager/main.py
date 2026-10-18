@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("Omarchy App Manager")
+    app.setApplicationName("OmaApp Manager")
     app.setApplicationVersion("1.0.0")
 
     window = OmarchyAppManager()

@@ -88,7 +88,7 @@ def test_schema_version_is_the_json_number_one(manifest):
 
 def test_manifest_identity(manifest):
     assert manifest['id'] == EXPECTED_ID
-    assert manifest['name'] == 'Omarchy App Manager'
+    assert manifest['name'] == 'OmaApp Manager'
     assert manifest['version'] == EXPECTED_VERSION
     assert SEMVER_RE.match(manifest['version'])
     assert manifest['author'] == 'Mostafa Hossam El-Din'
@@ -125,7 +125,7 @@ def test_entry_points_are_safe_relative_paths_that_exist(manifest):
 def test_bar_widget_metadata_block(manifest):
     meta = manifest['barWidget']
     assert isinstance(meta, dict)
-    assert meta['displayName'] == 'App Manager'
+    assert meta['displayName'] == 'OmaApp Manager'
     assert meta['defaultSection'] in ('left', 'center', 'right')
     assert meta['allowMultiple'] is False
 

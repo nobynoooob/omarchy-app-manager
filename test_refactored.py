@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Omarchy App Manager - Test Script
+OmaApp Manager - Test Script
 
 Tests the refactored application with clean PyQt6 implementation.
 """
@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_imports():
     """Test all necessary imports."""
-    print("Testing Omarchy App Manager imports...")
+    print("Testing OmaApp Manager imports...")
     
     try:
         from omarchy_app_manager.desktop_manager import (
@@ -92,7 +92,7 @@ def test_ui_components():
 
 if __name__ == "__main__":
     print("=" * 70)
-    print("Omarchy App Manager - Refactored Implementation Test")
+    print("OmaApp Manager - Refactored Implementation Test")
     print("=" * 70)
     
     if not test_imports():

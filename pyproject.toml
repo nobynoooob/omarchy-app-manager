@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "omarchy-app-manager"
 version = "1.0.0"
 authors = [
-    {name = "Omarchy Team", email = "team@omarchy.dev"}
+    {name = "Mostafa Hossam El-Din", email = "mostafa.hosayda@gmail.com"}
 ]
 description = "A modern desktop application for managing AppImages and shortcuts"
 readme = "README.md"
@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/omarchy-app-manager"
+Homepage = "https://github.com/nobynoooob/omarchy-app-manager"
 
 [project.scripts]
 omarchy-app-manager = "omarchy_app_manager.__main__:main"
