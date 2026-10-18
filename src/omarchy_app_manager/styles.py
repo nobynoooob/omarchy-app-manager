@@ -6,6 +6,8 @@ stylesheet, and the animated-button color variants. Keeping this out of
 ``ui_mainwindow.py`` keeps the widget code focused on behaviour.
 """
 
+import os
+import stat
 import tempfile
 from pathlib import Path
 from string import Template
@@ -635,21 +637,103 @@ QToolTip {
 """)
 
 
+def _prepare_private_dir(path):
+    """Create or verify a private directory we own; ``None`` when unsafe.
+
+    Refuses symlinks and foreign-owned paths (a shared, predictable location
+    would let a local attacker redirect later writes), and tightens the mode
+    to ``0700`` before any file is written into it.
+    """
+    try:
+        path.mkdir(parents=True, exist_ok=True, mode=0o700)
+        info = os.lstat(path)
+    except OSError:
+        return None
+    if not stat.S_ISDIR(info.st_mode):  # also rejects symlinked directories
+        return None
+    if info.st_uid != os.getuid():
+        return None
+    if info.st_mode & 0o077:
+        try:
+            os.chmod(path, 0o700)
+        except OSError:
+            return None
+    return path
+
+
+def _combo_arrow_dir():
+    """Per-user directory for generated UI assets (never shared ``/tmp``).
+
+    Prefers ``XDG_RUNTIME_DIR`` (session-private), then ``XDG_CACHE_HOME``
+    (user-owned); every candidate is verified before use.  A fresh private
+    ``mkdtemp`` is the last resort.
+    """
+    candidates = []
+    runtime = os.environ.get('XDG_RUNTIME_DIR')
+    if runtime:
+        candidates.append(Path(runtime) / 'omarchy-app-manager')
+    cache = os.environ.get('XDG_CACHE_HOME')
+    cache_root = Path(cache) if cache else Path.home() / '.cache'
+    candidates.append(cache_root / 'omarchy_app_manager' / 'ui')
+    for candidate in candidates:
+        directory = _prepare_private_dir(candidate)
+        if directory is not None:
+            return directory
+    return Path(tempfile.mkdtemp(prefix='omarchy-app-manager-'))
+
+
+def _usable_file(path):
+    """True only for a plain, non-empty file we own (symlinks never count)."""
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return False
+    return (
+        stat.S_ISREG(info.st_mode)
+        and info.st_uid == os.getuid()
+        and info.st_size > 0
+    )
+
+
+def _save_pixmap_atomically(pixmap, target):
+    """Write ``pixmap`` as PNG via an unpredictable temp name + rename.
+
+    ``os.replace`` swaps the directory entry itself, so a planted symlink at
+    ``target`` is replaced rather than followed - there is no check-then-write
+    window an attacker could race.
+    """
+    fd, temp_name = tempfile.mkstemp(prefix=target.name + '.', dir=target.parent)
+    try:
+        os.close(fd)
+        if not pixmap.save(temp_name, 'PNG'):
+            raise OSError(f'could not save {temp_name}')
+        os.chmod(temp_name, 0o600)
+        os.replace(temp_name, target)
+    except OSError:
+        try:
+            os.unlink(temp_name)
+        except OSError:
+            pass
+        raise
+
+
 def _combo_arrow_path():
     """Render (once) a themed chevron for QComboBox and return its path.
 
-    QSS cannot draw arrows, so a tiny PNG is generated next to the usual temp
-    files and referenced by :func:`build_app_qss`.
+    QSS cannot draw arrows, so a tiny PNG is generated in a private per-user
+    directory and referenced by :func:`build_app_qss`.  Existing files are
+    reused only when they are plain files we own; everything else is
+    regenerated with an atomic rename, so planted symlinks can never redirect
+    the write at arbitrary user files.
     """
     from PyQt6.QtCore import QPointF, Qt
     from PyQt6.QtGui import QPainter, QPen, QPixmap, QPolygonF
 
-    target_dir = Path(tempfile.gettempdir()) / 'omarchy-app-manager'
-    target_dir.mkdir(parents=True, exist_ok=True)
+    target_dir = _combo_arrow_dir()
     # Keyed by color so switching themes regenerates the arrow.
     arrow_color = READABLE_PALETTE['overlay1']
     arrow = target_dir / f"combo-arrow-{arrow_color.lstrip('#')}.png"
-    if arrow.exists():
+    if _usable_file(arrow):
         return arrow
 
     canvas = QPixmap(24, 24)
@@ -664,7 +748,10 @@ def _combo_arrow_path():
         QPointF(7.0, 10.0), QPointF(12.0, 15.0), QPointF(17.0, 10.0),
     ]))
     painter.end()
-    canvas.save(str(arrow))
+    try:
+        _save_pixmap_atomically(canvas, arrow)
+    except OSError:
+        pass  # styling is best-effort; QSS just loses the custom arrow
     return arrow
 
 
