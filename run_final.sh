@@ -1,6 +1,14 @@
 #!/bin/bash
 
 # OmaApp Manager - Final Launcher Script
+#
+# Store installs (`omarchy plugin add ... --enable`) need no manual setup.
+# The launcher self-checks its runtime on every start: bundled venv first,
+# then the system interpreter with python-pyqt6. When PyQt6 is missing
+# entirely, the first launch provisions a private, user-local venv inside the
+# plugin folder and installs PyQt6 from PyPI - no sudo, nothing outside the
+# plugin folder. The bar widget spawns this script detached, so progress and
+# errors are announced via notify-send.
 
 # Resolve the app folder from this script's location so the launcher works
 # from any working directory (the bar widget invokes it by absolute path).
@@ -10,16 +18,11 @@ cd "$SCRIPT_DIR" || exit 1
 echo "OmaApp Manager"
 echo "==================="
 
-# Pick the interpreter: the bundled virtualenv when present, otherwise the
-# system python (the only runtime dependency is PyQt6, packaged on Arch as
-# python-pyqt6). A store-installed clone has no venv, so the fallback keeps
-# the bar widget working out of the box.
-PYTHON=""
-if [ -x "venv/bin/python3" ]; then
-    PYTHON="venv/bin/python3"
-elif command -v python3 >/dev/null 2>&1; then
-    PYTHON="python3"
-fi
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "OmaApp Manager" "$1" 2>/dev/null
+    fi
+}
 
 fail() {
     # The bar widget spawns this detached, so a desktop notification is the
@@ -32,14 +35,39 @@ fail() {
     exit 1
 }
 
-[ -n "$PYTHON" ] || fail "Python 3 not found. Install python3 and python-pyqt6."
+# True when the given interpreter (relative path or command name) imports PyQt6.
+has_pyqt6() {
+    [ -n "$1" ] || return 1
+    command -v "$1" >/dev/null 2>&1 || return 1
+    "$1" -c "from PyQt6.QtWidgets import QApplication" 2>/dev/null
+}
 
-# Verify PyQt6 is available to the chosen interpreter
-if ! "$PYTHON" -c "from PyQt6.QtWidgets import QApplication" 2>/dev/null; then
-    if [ "$PYTHON" = "python3" ]; then
-        fail "PyQt6 not available. Install it with: sudo pacman -S python-pyqt6"
+# Prefer the bundled virtualenv, then the system interpreter. Both are
+# zero-cost when present; provisioning only runs when neither has PyQt6.
+PYTHON=""
+if has_pyqt6 "venv/bin/python3"; then
+    PYTHON="venv/bin/python3"
+elif has_pyqt6 "python3"; then
+    PYTHON="python3"
+fi
+
+if [ -z "$PYTHON" ]; then
+    # First launch without PyQt6 anywhere: create a private venv and install
+    # PyQt6 into it. User-local only: no sudo, no system packages touched.
+    command -v python3 >/dev/null 2>&1 || \
+        fail "Python 3 not found. Install PyQt6 with: sudo pacman -S python-pyqt6"
+    notify "First-time setup: installing PyQt6 into a private environment (one time, may take a minute)..."
+    if [ ! -x venv/bin/python3 ]; then
+        python3 -m venv venv >/dev/null 2>&1 || \
+            fail "Could not create a private Python environment. Install PyQt6 instead with: sudo pacman -S python-pyqt6"
     fi
-    fail "PyQt6 not installed in the virtual environment! Run: venv/bin/pip install PyQt6"
+    if ! venv/bin/python3 -m pip install --quiet --disable-pip-version-check --no-input \
+            -r "$SCRIPT_DIR/requirements.txt" >> "venv/provision.log" 2>&1; then
+        fail "Could not install PyQt6 (offline?). Install it instead with: sudo pacman -S python-pyqt6"
+    fi
+    has_pyqt6 "venv/bin/python3" || \
+        fail "PyQt6 setup failed. Install it instead with: sudo pacman -S python-pyqt6"
+    PYTHON="venv/bin/python3"
 fi
 
 # Verify the omarchy_app_manager package is importable

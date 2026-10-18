@@ -6,21 +6,42 @@ bar-widget launcher.
 
 ## Install
 
+### Omarchy plugin store (recommended — no manual setup)
+
 ```sh
-omarchy plugin add https://github.com/nobynoooob/omarchy-app-manager.git --enable
+omarchy plugin add https://github.com/nobynoooob/omarchy-app-manager --enable
 ```
 
 Adds the **OmaApp Manager** widget to your Omarchy bar (left section by
-default). The widget launches the app through `run_final.sh`, which prefers a
-local `venv/` when present and otherwise falls back to the system interpreter —
-the only runtime dependency is PyQt6, packaged on Arch as `python-pyqt6`:
+default). No manual setup steps are required: `run_final.sh` self-checks its
+runtime on every start and uses the bundled `venv/` when present, otherwise
+the system interpreter with `python-pyqt6`. If PyQt6 is missing entirely, the
+first launch provisions a private, user-local `venv/` inside the plugin folder
+and installs PyQt6 there with pip — no `sudo`, nothing outside the plugin
+folder. The one-time setup is announced via a desktop notification.
+
+Arch users who prefer the system package can install it up front and the
+launcher will use it directly:
 
 ```sh
-sudo pacman -S python-pyqt6
+sudo pacman -S python-pyqt6   # optional
 ```
 
 Optional: `gamemode` / `gamemoderun` (`sudo pacman -S gamemode`) powers the
 GameMode launch wrapper; the app works without it.
+
+### Manual / development install (fallback)
+
+```sh
+git clone https://github.com/nobynoooob/omarchy-app-manager.git
+cd omarchy-app-manager
+python3 -m venv venv
+venv/bin/pip install -e .
+./run_final.sh
+```
+
+Launching the app directly is always possible with
+`PYTHONPATH=src venv/bin/python3 -m omarchy_app_manager`.
 
 ## Usage
 
@@ -86,62 +107,26 @@ particularly AppImages, in the Linux ecosystem.
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.8 or higher
-- Linux system with Wayland support (recommended for optimal experience)
-- PyQt6 library
-
-### Installation
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone <repository-url>
-   cd omarchy-app-manager
-   ```
-
-2. **Set Up Environment**
-
-   The project includes a virtual environment. Activate it with:
-
-   ```bash
-   source venv/bin/activate  # On Linux/macOS
-   # Or
-   venv\\Scripts\\activate    # On Windows
-   ```
-
-3. **Install Dependencies**
-
-   ```bash
-   pip install -r requirements.txt
-   # Or install directly with pip
-   pip install -e .
-   ```
-
-4. **Run the Application**
-
-   ```bash
-   ./run.sh
-   # or
-   source venv/bin/activate && python3 -m omarchy_app_manager
-   ```
+See [Install](#install) above for the store command and the manual fallback.
+Once installed, click the grid glyph in the bar to open the app.
 
 ## Project Structure
 
 ```
 omarchy-app-manager/
-├── src/
-│   └── omarchy_app_manager/
-│       ├── __init__.py
-│       ├── __main__.py
-│       ├── main.py
-│       ├── desktop_manager.py      # Handles .desktop file operations
-│       └── ui_mainwindow.py        # UI components and animations
+├── manifest.json               # Omarchy plugin manifest (bar widget)
+├── BarWidget.qml               # Quickshell bar-widget bridge
+├── run_final.sh                # Launcher (self-provisioning)
+├── src/omarchy_app_manager/
+│   ├── ui_mainwindow.py        # UI components and animations
+│   ├── desktop_manager.py      # Handles .desktop file operations
+│   ├── styles.py               # Design system / QSS
+│   ├── theme.py                # Catppuccin theme syncing
+│   ├── appimage_icons.py       # Icon extraction and caching
+│   └── integration.py          # System integration
 ├── pyproject.toml              # Package configuration
-├── README.md                   # Project documentation
 ├── requirements.txt            # Dependency list
-└── run.sh                      # Launch script
+└── tests/                      # Pytest suite
 ```
 
 ## Usage Guide
@@ -185,10 +170,6 @@ python -m build
 
 We welcome contributions to improve this application. Please follow the existing code style and ensure comprehensive testing before submitting pull requests.
 
-## License
-
-MIT License
-
 ## System Requirements
 
 This application is designed for modern Linux desktop environments, particularly:
@@ -200,20 +181,6 @@ This application is designed for modern Linux desktop environments, particularly
 - **PyQt6** library
 
 The application will also work on traditional X11 setups, though some visual effects may differ.
-
-## Installation
-
-1. **Install Dependencies**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Launch Application**
-
-   ```bash
-   ./run.sh
-   ```
 
 ## Features
 
@@ -229,35 +196,6 @@ The application will also work on traditional X11 setups, though some visual eff
 - **Animations**: Smooth hover effects, transitions, and button feedback
 - **Typography**: Clean, modern sans-serif font stack
 
-## Installation
-
-This application is designed for Linux systems with Wayland support (Hyprland friendly).
-
-### System Requirements
-
-- Python 3.8 or higher
-- Linux distribution
-- Wayland display server (Hyprland recommended)
-
-### Installing Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### Running the Application
-
-```bash
-./run.sh
-```
-
-### Building the Application
-
-```bash
-pip install build
-python -m build
-```
-
 ## Notes
 
 - The application is optimized for modern Linux desktop environments
@@ -270,7 +208,7 @@ python -m build
 
 ### If you encounter errors:
 
-1. **Missing PyQt6**: Install the required dependencies
+1. **Missing PyQt6**: the launcher provisions it automatically on first run; if that fails (e.g. offline), install it with `sudo pacman -S python-pyqt6`
 2. **Permission Issues**: Ensure the application has write access to `~/.local/share/applications/`
 3. **Display Issues**: Try running with a different display server if Wayland is not available
 

@@ -199,13 +199,138 @@ def test_startup_script_is_executable_and_self_locating():
 
 def test_startup_script_survives_a_venv_less_store_install():
     """A git-installed clone has no venv (it is gitignored): the launcher must
-    fall back to the system interpreter (python-pyqt6) and surface startup
-    errors via notify-send, since the bar widget spawns it detached."""
+    fall back to the system interpreter (python-pyqt6) and, when PyQt6 is
+    missing everywhere, provision a private venv by itself - announcing
+    progress and errors via notify-send, since the bar widget spawns it
+    detached and a store install must need no manual setup."""
     source = RUNNER_PATH.read_text(encoding='utf-8')
     assert 'venv/bin/python3' in source       # preferred when present
     assert 'command -v python3' in source     # system fallback
     assert 'notify-send' in source
     assert 'pacman -S python-pyqt6' in source
+    # Zero manual setup: first launch self-provisions PyQt6 user-locally.
+    assert 'python3 -m venv venv' in source
+    assert '-m pip install' in source
+    assert 'requirements.txt' in source
+
+
+def test_startup_script_never_executes_privileged_commands():
+    """The launcher runs unsandboxed from the shell: it must never invoke
+    sudo/pacman itself. Package-manager hints are allowed only as text inside
+    notification/error strings."""
+    source = RUNNER_PATH.read_text(encoding='utf-8')
+    for line in source.splitlines():
+        stripped = line.strip()
+        assert not re.match(r'^(sudo|pacman)\b', stripped), (
+            f'launcher must not execute privileged commands: {stripped!r}')
+
+
+def _stage_runnable_plugin(tmp_path):
+    """Stage just what a store clone needs: the launcher + requirements."""
+    stage = tmp_path / 'plugin'
+    stage.mkdir()
+    shutil.copy2(RUNNER_PATH, stage / 'run_final.sh')
+    shutil.copy2(REPO / 'requirements.txt', stage / 'requirements.txt')
+    return stage
+
+
+def _make_fake_toolchain(tmp_path, venv_creation_succeeds=True):
+    """Fake python3/notify-send that record calls and simulate no PyQt6.
+
+    ``python3`` fails the PyQt6 import probe, logs every call, and either
+    creates a venv with a working interpreter (copying ``venv_python``) or
+    fails the venv creation.  All behavior is driven by files in ``tmp_path``.
+    """
+    fakebin = tmp_path / 'fakebin'
+    fakebin.mkdir()
+    calls = tmp_path / 'calls.log'
+    notifications = tmp_path / 'notify.log'
+
+    venv_python = tmp_path / 'venv_python'
+    venv_python.write_text(
+        '#!/bin/bash\n'
+        'echo "venv/bin/python3 $*" >> "$FAKE_CALLS"\n'
+        'exit 0\n',
+        encoding='utf-8')
+    venv_python.chmod(0o755)
+
+    python3 = fakebin / 'python3'
+    python3.write_text(
+        '#!/bin/bash\n'
+        'echo "python3 $*" >> "$FAKE_CALLS"\n'
+        'case "$*" in\n'
+        '  *"from PyQt6.QtWidgets import QApplication"*) exit 1 ;;\n'
+        'esac\n'
+        'if [ "$1" = "-m" ] && [ "$2" = "venv" ]; then\n'
+        '  [ "$FAKE_VENV_OK" = "1" ] || exit 1\n'
+        '  mkdir -p venv/bin && cp "$FAKE_VENV_SOURCE" venv/bin/python3\n'
+        '  chmod +x venv/bin/python3\n'
+        '  exit 0\n'
+        'fi\n'
+        'exit 0\n',
+        encoding='utf-8')
+    python3.chmod(0o755)
+
+    notify = fakebin / 'notify-send'
+    notify.write_text(
+        '#!/bin/bash\n'
+        'echo "$*" >> "$FAKE_NOTIFY_LOG"\n'
+        'exit 0\n',
+        encoding='utf-8')
+    notify.chmod(0o755)
+
+    env = {
+        'PATH': f'{fakebin}:/usr/bin:/bin',
+        'HOME': str(tmp_path),
+        'FAKE_CALLS': str(calls),
+        'FAKE_NOTIFY_LOG': str(notifications),
+        'FAKE_VENV_SOURCE': str(venv_python),
+        'FAKE_VENV_OK': '1' if venv_creation_succeeds else '0',
+        'LC_ALL': 'C',
+    }
+    return calls, notifications, env
+
+
+def _run_staged_launcher(stage, env):
+    return subprocess.run(
+        ['/bin/bash', str(stage / 'run_final.sh')],
+        cwd=stage, env=env, capture_output=True, text=True, timeout=60)
+
+
+def test_launcher_provisions_pyqt6_into_a_private_venv(tmp_path):
+    """End-to-end: with no PyQt6 anywhere, the staged launcher creates a venv
+    inside its own folder, installs from requirements.txt, notifies first,
+    and then starts the app through that venv - all without sudo."""
+    stage = _stage_runnable_plugin(tmp_path)
+    calls, notifications, env = _make_fake_toolchain(tmp_path)
+
+    proc = _run_staged_launcher(stage, env)
+
+    assert proc.returncode == 0, proc.stderr
+    log = calls.read_text(encoding='utf-8')
+    assert 'python3 -m venv venv' in log
+    assert '-m pip install' in log and 'requirements.txt' in log
+    assert 'venv/bin/python3 -m omarchy_app_manager' in log
+    assert (stage / 'venv' / 'bin' / 'python3').exists()
+    assert 'First-time setup' in notifications.read_text(encoding='utf-8')
+    assert 'sudo' not in log  # nothing privileged was executed
+
+
+def test_launcher_reports_failed_provisioning_gracefully(tmp_path):
+    """When the venv cannot be created or PyQt6 cannot be installed, the
+    launcher must fail with a notify-send message carrying the pacman
+    fallback instead of starting a broken app."""
+    stage = _stage_runnable_plugin(tmp_path)
+    calls, notifications, env = _make_fake_toolchain(
+        tmp_path, venv_creation_succeeds=False)
+
+    proc = _run_staged_launcher(stage, env)
+
+    assert proc.returncode != 0
+    log = calls.read_text(encoding='utf-8')
+    assert '-m pip install' not in log  # no pip without a venv
+    notes = notifications.read_text(encoding='utf-8')
+    assert 'pacman -S python-pyqt6' in notes
 
 
 @requires_qmllint
