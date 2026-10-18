@@ -1,7 +1,47 @@
 # OmaApp Manager
 
 A modern, elegant desktop application for managing AppImages and shortcuts
-in the user's application menu (~/.local/share/applications/).
+in the user's application menu (~/.local/share/applications/), plus an Omarchy
+bar-widget launcher.
+
+## Install
+
+```sh
+omarchy plugin add https://github.com/nobynoooob/omarchy-app-manager.git --enable
+```
+
+Adds the **OmaApp Manager** widget to your Omarchy bar (left section by
+default). The widget launches the app through `run_final.sh`, which prefers a
+local `venv/` when present and otherwise falls back to the system interpreter —
+the only runtime dependency is PyQt6, packaged on Arch as `python-pyqt6`:
+
+```sh
+sudo pacman -S python-pyqt6
+```
+
+Optional: `gamemode` / `gamemoderun` (`sudo pacman -S gamemode`) powers the
+GameMode launch wrapper; the app works without it.
+
+## Usage
+
+Click the grid glyph in the bar to open OmaApp Manager. From there you can add
+AppImages or shortcuts, search and filter installed entries, and launch, edit,
+open the containing folder, or delete any entry. GameMode / prime-GPU
+wrappers, icon auto-extraction, and Catppuccin theme syncing are built in.
+
+## Configure
+
+Move the widget to another bar section:
+
+```sh
+omarchy bar move com.mostafa.omarchy-app-manager --section center
+```
+
+## Remove
+
+```sh
+omarchy plugin remove com.mostafa.omarchy-app-manager
+```
 
 ## Overview
 
@@ -245,3 +285,7 @@ For issues or questions, please refer to the project documentation or open an is
 ## About
 
 OmaApp Manager is a modern, elegant desktop application designed to easily manage AppImages and shortcuts in the user's application menu.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
