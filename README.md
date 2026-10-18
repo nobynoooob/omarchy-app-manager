@@ -27,7 +27,13 @@ GameMode launch wrapper; the app works without it.
 Click the grid glyph in the bar to open OmaApp Manager. From there you can add
 AppImages or shortcuts, search and filter installed entries, and launch, edit,
 open the containing folder, or delete any entry. GameMode / prime-GPU
-wrappers, icon auto-extraction, and Catppuccin theme syncing are built in.
+wrappers, icon extraction, and Catppuccin theme syncing are built in.
+
+Selecting or dropping an AppImage never executes it. Importing the icon
+embedded in an AppImage is an explicit **Extract icon** action guarded by a
+warning dialog, because extraction runs the file (`--appimage-extract`) with
+your permissions. Icons imported before are reused from the cache without
+executing anything.
 
 ## Configure
 

@@ -278,12 +278,21 @@ def test_detect_icon_for_path_uses_extracted_cache(qapp, tmp_path, icon_cache):
     assert detect_icon_for_path(appimage, "My App") == str(sibling)
 
 
-def test_dialog_prefill_extracts_icon_in_background(qapp, tmp_path, icon_cache):
+def test_dialog_extracts_icon_in_background_after_consent(
+        qapp, tmp_path, icon_cache, monkeypatch):
     from omarchy_app_manager.ui_mainwindow import CategoryDialog
 
     appimage = fake_appimage(tmp_path / "MyApp-1.0.AppImage", PNG_WITH_HINT)
     dialog = CategoryDialog()
     dialog.apply_prefill({"path": str(appimage), "name": "My App"})
+
+    # Prefill alone never executes the AppImage; extraction is opt-in.
+    assert dialog.icon_input.text().strip() == ""
+    assert dialog.extract_button.isVisibleTo(dialog)
+
+    monkeypatch.setattr(
+        CategoryDialog, "_confirm_extraction", lambda self, path: True)
+    dialog.extract_button.click()
 
     deadline = time.monotonic() + 10.0
     while time.monotonic() < deadline and not dialog.icon_input.text().strip():
@@ -298,7 +307,8 @@ def test_dialog_prefill_extracts_icon_in_background(qapp, tmp_path, icon_cache):
     assert not dialog.icon_preview.pixmap().isNull()
 
 
-def test_dialog_falls_back_gracefully_when_extraction_fails(qapp, tmp_path, icon_cache):
+def test_dialog_falls_back_gracefully_when_extraction_fails(
+        qapp, tmp_path, icon_cache, monkeypatch):
     from omarchy_app_manager.ui_mainwindow import CategoryDialog
 
     junk = tmp_path / "broken.AppImage"
@@ -306,6 +316,10 @@ def test_dialog_falls_back_gracefully_when_extraction_fails(qapp, tmp_path, icon
 
     dialog = CategoryDialog()
     dialog.apply_prefill({"path": str(junk), "name": "Broken"})
+
+    monkeypatch.setattr(
+        CategoryDialog, "_confirm_extraction", lambda self, path: True)
+    dialog.extract_button.click()
 
     deadline = time.monotonic() + 1.0
     while time.monotonic() < deadline:

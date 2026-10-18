@@ -2148,10 +2148,21 @@ class CategoryDialog(QDialog):
         icon_browse_button = AnimatedButton('Browse', 'ghost', padding=28)
         icon_browse_button.clicked.connect(self._browse_icon)
         icon_row.addWidget(icon_browse_button)
+        # Offered only for an AppImage without a cached icon: extracting the
+        # embedded icon means executing the file, so it stays behind an
+        # explicit click + confirmation (see _extract_icon_requested).
+        self.extract_button = AnimatedButton('Extract icon', 'ghost', padding=22)
+        self.extract_button.setToolTip(
+            'Import the icon embedded in the AppImage. Extraction runs the '
+            'file with --appimage-extract, which executes its code.')
+        self.extract_button.clicked.connect(self._extract_icon_requested)
+        self.extract_button.setVisible(False)
+        icon_row.addWidget(self.extract_button)
         layout.addRow(self._field_label('Icon'), icon_row)
 
         self.icon_input.textChanged.connect(self.update_icon_preview)
         self.name_input.textChanged.connect(self.update_icon_preview)
+        self.path_input.textChanged.connect(self.update_icon_preview)
 
         self.category_combo = QComboBox()
         self.category_combo.addItems(CATEGORIES)
@@ -2233,18 +2244,71 @@ class CategoryDialog(QDialog):
 
     # -- drag & drop + live preview ------------------------------------------ #
     def _on_exec_dropped(self, path):
-        """Exec drop: fill the path; pre-fill name/icon while they are empty."""
+        """Exec drop: fill the path; pre-fill name/icon while they are empty.
+
+        AppImages are never executed here: only sibling artwork and previously
+        cached icons are used, extraction stays behind its own button.
+        """
         if not self.name_input.text().strip():
             self.name_input.setText(suggest_app_name(path))
         if not self.icon_input.text().strip():
             detected = detect_icon_for_path(path, self.name_input.text())
             if detected:
                 self.icon_input.setText(detected)
-            else:
-                self._request_appimage_icon(path)
+        self._refresh_extract_button()
+
+    def _prefill_icon_safely(self, path):
+        """Fill the icon field from cache or sibling artwork (no execution)."""
+        if not self.icon_input.text().strip():
+            detected = detect_icon_for_path(path, self.name_input.text())
+            if detected:
+                self.icon_input.setText(detected)
+        self._refresh_extract_button()
+
+    def _refresh_extract_button(self):
+        """Offer extraction only for an AppImage that still needs an icon."""
+        path = self.path_input.text().strip()
+        needs_extract = (
+            bool(path)
+            and not self.icon_input.text().strip()
+            and is_appimage(path)
+            and Path(path).is_file()
+            and cached_appimage_icon_path(path) is None
+        )
+        self.extract_button.setVisible(needs_extract)
+
+    def _extract_icon_requested(self):
+        """Explicit, consent-gated AppImage icon extraction.
+
+        Running ``<file> --appimage-extract`` executes the AppImage's code
+        with the user's permissions, so it only ever happens after the user
+        confirms the warning dialog.
+        """
+        path = self.path_input.text().strip()
+        if not path or not self._confirm_extraction(path):
+            return
+        self._request_appimage_icon(path)
+        self._refresh_extract_button()
+
+    def _confirm_extraction(self, path):
+        """Ask before executing ``path`` (seam so tests can stub consent)."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle('Extract AppImage Icon')
+        box.setText('Extract the embedded icon from this AppImage?')
+        box.setInformativeText(
+            f'{Path(path).name}\n\n'
+            'Extraction runs the file once with --appimage-extract, which '
+            'executes its code with your permissions. Only continue for '
+            'files you trust.')
+        extract = box.addButton('Extract Icon', QMessageBox.ButtonRole.AcceptRole)
+        cancel = box.addButton('Cancel', QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(cancel)
+        box.exec()
+        return box.clickedButton() is extract
 
     def _request_appimage_icon(self, path):
-        """Ask for the AppImage's embedded icon while the field stays empty."""
+        """Run extraction for ``path`` (only after explicit consent)."""
         if not self.icon_input.text().strip() and request_appimage_icon(path):
             return True
         return False
@@ -2266,7 +2330,7 @@ class CategoryDialog(QDialog):
         if prefill.get('icon'):
             self.icon_input.setText(prefill['icon'])
         elif self.path_input.text().strip():
-            self._request_appimage_icon(self.path_input.text().strip())
+            self._prefill_icon_safely(self.path_input.text().strip())
         self.update_icon_preview()
 
     def update_icon_preview(self):
@@ -2275,6 +2339,7 @@ class CategoryDialog(QDialog):
             'icon': self.icon_input.text().strip(),
             'name': self.name_input.text().strip() or 'App',
         }, ICON_PREVIEW_SIZE))
+        self._refresh_extract_button()
 
     def _field_label(self, text):
         label = QLabel(text)
@@ -2311,7 +2376,7 @@ class CategoryDialog(QDialog):
         )
         if file_path:
             self.path_input.setText(file_path)
-            self._request_appimage_icon(file_path)
+            self._prefill_icon_safely(file_path)
 
     def _browse_icon(self):
         icon_path, _ = QFileDialog.getOpenFileName(
