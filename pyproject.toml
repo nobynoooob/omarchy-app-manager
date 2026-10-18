@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omarchy-app-manager"
+version = "1.0.0"
+authors = [
+    {name = "Omarchy Team", email = "team@omarchy.dev"}
+]
+description = "A modern desktop application for managing AppImages and shortcuts"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Desktop Environment",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "PyQt6>=6.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/omarchy-app-manager"
+
+[project.scripts]
+omarchy-app-manager = "omarchy_app_manager.__main__:main"

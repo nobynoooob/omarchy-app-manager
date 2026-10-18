@@ -1,0 +1,10 @@
+# Development-only artefacts. The plugin payload is validated by
+# `omarchy plugin validate`; symlinked files (e.g. venv/lib64) and caches must
+# never be committed, or the shell refuses to install the plugin.
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
