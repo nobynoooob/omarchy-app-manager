@@ -7,8 +7,10 @@
 # then the system interpreter with python-pyqt6. When PyQt6 is missing
 # entirely, the first launch provisions a private, user-local venv inside the
 # plugin folder and installs PyQt6 from PyPI - no sudo, nothing outside the
-# plugin folder. The bar widget spawns this script detached, so progress and
-# errors are announced via notify-send.
+# plugin folder. The install is hash-verified against the pinned versions in
+# requirements.txt, so the installed bytes are the ones recorded in this
+# commit. The bar widget spawns this script detached, so progress and errors
+# are announced via notify-send.
 
 # Resolve the app folder from this script's location so the launcher works
 # from any working directory (the bar widget invokes it by absolute path).
@@ -61,9 +63,14 @@ if [ -z "$PYTHON" ]; then
         python3 -m venv venv >/dev/null 2>&1 || \
             fail "Could not create a private Python environment. Install PyQt6 instead with: sudo pacman -S python-pyqt6"
     fi
+    # Hash-verified install: requirements.txt pins every version and records
+    # the artifact hashes, so the bytes installed are exactly the ones
+    # recorded in this commit. pip refuses any download that does not match,
+    # and --only-binary keeps pip from building anything from source.
     if ! venv/bin/python3 -m pip install --quiet --disable-pip-version-check --no-input \
+            --require-hashes --only-binary=:all: \
             -r "$SCRIPT_DIR/requirements.txt" >> "venv/provision.log" 2>&1; then
-        fail "Could not install PyQt6 (offline?). Install it instead with: sudo pacman -S python-pyqt6"
+        fail "Could not install the verified PyQt6 build (offline, or no recorded hash for this Python version). Install it instead with: sudo pacman -S python-pyqt6"
     fi
     has_pyqt6 "venv/bin/python3" || \
         fail "PyQt6 setup failed. Install it instead with: sudo pacman -S python-pyqt6"

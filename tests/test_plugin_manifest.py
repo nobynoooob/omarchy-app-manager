@@ -25,6 +25,7 @@ REPO = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = REPO / 'manifest.json'
 BAR_WIDGET_PATH = REPO / 'BarWidget.qml'
 RUNNER_PATH = REPO / 'run_final.sh'
+REQUIREMENTS_PATH = REPO / 'requirements.txt'
 ICON_PATH = REPO / 'assets' / 'omarchy-app-manager.svg'
 PACKAGED_ICON_PATH = (
     REPO / 'src' / 'omarchy_app_manager' / 'assets' / 'omarchy-app-manager.svg')
@@ -223,6 +224,48 @@ def test_startup_script_never_executes_privileged_commands():
         stripped = line.strip()
         assert not re.match(r'^(sudo|pacman)\b', stripped), (
             f'launcher must not execute privileged commands: {stripped!r}')
+
+
+def test_runtime_dependencies_are_pinned_and_hash_verified():
+    """Every runtime dependency must be an exact version with recorded
+    artifact hashes, so the bytes installed are the ones reviewed in this
+    commit and are never selected at install time."""
+    text = REQUIREMENTS_PATH.read_text(encoding='utf-8')
+    requirements = {}
+    last_name = None
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith('#'):
+            continue
+        line = line.replace('\\', ' ').strip()
+        if line.startswith('--hash'):
+            assert last_name is not None, 'a hash must follow a requirement'
+            requirements[last_name]['hashes'].add(line.split('=', 1)[1])
+            continue
+        name, sep, spec = line.partition('==')
+        assert sep, f'requirement must pin an exact version: {line!r}'
+        assert not (set(spec) & set('<>!*~')), (
+            f'requirement must not use a version range: {line!r}')
+        last_name = name.strip()
+        requirements[last_name] = {'spec': spec.strip(), 'hashes': set()}
+
+    assert set(requirements) == {'PyQt6', 'PyQt6-Qt6', 'PyQt6-sip'}
+    for name, info in requirements.items():
+        assert info['hashes'], f'{name} must record at least one artifact hash'
+        for digest in info['hashes']:
+            assert re.fullmatch(r'sha256:[0-9a-f]{64}', digest), digest
+
+
+def test_startup_script_installs_dependencies_with_hash_verification():
+    """The launcher must ask pip to verify the recorded hashes and must not
+    build anything from source, so a substituted artifact cannot be used."""
+    source = RUNNER_PATH.read_text(encoding='utf-8')
+    assert '--require-hashes' in source
+    assert '--only-binary=:all:' in source
+    assert '-r "$SCRIPT_DIR/requirements.txt"' in source
+    # No unpinned requirement may sneak back in.
+    assert 'PyQt6>=' not in source
+    assert 'PyQt6>=' not in REQUIREMENTS_PATH.read_text(encoding='utf-8')
 
 
 def _stage_runnable_plugin(tmp_path):

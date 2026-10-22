@@ -20,6 +20,14 @@ first launch provisions a private, user-local `venv/` inside the plugin folder
 and installs PyQt6 there with pip — no `sudo`, nothing outside the plugin
 folder. The one-time setup is announced via a desktop notification.
 
+That install is **pinned and hash-verified**: `requirements.txt` fixes the
+exact version of every runtime dependency and records the SHA-256 of each
+artifact, and the launcher installs with `pip --require-hashes
+--only-binary=:all:`. pip therefore refuses any download that does not match
+the hashes recorded in this repository, so the installed bytes are exactly the
+reviewed ones instead of whatever the index serves later. Linux wheels for
+x86_64 and aarch64 are covered, on CPython 3.10 – 3.15.
+
 Arch users who prefer the system package can install it up front and the
 launcher will use it directly:
 
@@ -100,7 +108,7 @@ particularly AppImages, in the Linux ecosystem.
 
 ## Technology Stack
 
-- **Language**: Python 3.8+
+- **Language**: Python 3.10+
 - **GUI Framework**: PyQt6 (v6.11.0+)
 - **Target Environment**: Linux/Wayland (Hyprland friendly)
 - **Desktop Integration**: Integration with XDG Base Directory Specification
@@ -177,7 +185,7 @@ This application is designed for modern Linux desktop environments, particularly
 - **Wayland** as the display server
 - **Hyprland** as the window manager (optional but recommended)
 - **XDG Base Directory Specification** compliant systems
-- **Python 3.8** or higher
+- **Python 3.10** or higher
 - **PyQt6** library
 
 The application will also work on traditional X11 setups, though some visual effects may differ.

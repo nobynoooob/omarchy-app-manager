@@ -1,1 +1,32 @@
-PyQt6>=6.0.0
+# Runtime dependency set for the OmaApp Manager plugin.
+#
+# Every version is pinned exactly and every artifact is hash-verified, so the
+# bytes the launcher installs are exactly the ones recorded in this reviewed
+# commit - nothing is selected at install time. Install with:
+#
+#   pip install --require-hashes --only-binary=:all: -r requirements.txt
+#
+# Linux wheels only (x86_64 + aarch64). PyQt6-sip ships one build per
+# CPython release, so a hash is recorded for each supported version
+# (3.10 - 3.15); on an unlisted interpreter the launcher reports the
+# system-package fallback instead of installing unverified bytes.
+
+PyQt6==6.11.0 \
+    --hash=sha256:0734959955adde095af9a074213a7f73386d1bbbddfc27346b4c0621641a692e \
+    --hash=sha256:8555277989fa7d114cb3c3443fd261d566909f7268ceedd41d93a5f02d37ec05
+PyQt6-Qt6==6.11.2 \
+    --hash=sha256:2c38ee8b797c0d7f327afef4cfbb97c73676954ef2d1d503779d62c982bf5a66 \
+    --hash=sha256:da7d747ad917f044d841ff834f17d2c50a0cc5d0e3b16479d8662544207d0567
+PyQt6-sip==13.13.0 \
+    --hash=sha256:0f4329bcf7c4bbfd1f34b51f9fe417f839b18ae5035b6e9de1c7718b821f45aa \
+    --hash=sha256:19044f546ca397ed315e59077b0761e86c5129a23ac95d39166a46b740a6065e \
+    --hash=sha256:42544406d4519122ad9ee7a79bc9195cdceba6d777d2e481d346e6ad2801f38a \
+    --hash=sha256:6037f5f122b190ec1c3f53fdc796b68a9fbf83824b2d1c11f0ecbb787989a542 \
+    --hash=sha256:70199e2b37ac83a4799df2a2a2ec8358e1d20dfdf011f2baec17a8867c34fe12 \
+    --hash=sha256:7429e63fc8279a0508ed5cbc1b33da76c15a61a06a745825e807a3604fbde4f2 \
+    --hash=sha256:78fd781938d09797db6d0b23ac070a91d567c9170581dba3ca87630abb69055b \
+    --hash=sha256:7d0f75205c29c21ea23e6dd96f9cd9b6c1a729e48db0bd4a77325ab24e227276 \
+    --hash=sha256:c42dcf3fa0b8bb9985423850971064323a3a4aa97efdc3fa69161b37088d795c \
+    --hash=sha256:cf73a187600708ef69225a25be53d71e918fa853f9b992c3720e8dbf657e49bc \
+    --hash=sha256:e30bec75c82886a3846e593570e6e71d7a417743867cc356c99acb849e27bfc2 \
+    --hash=sha256:f856e077035bd0316e26396fa70100b6ff13405d017464bbb501ae73070f3dce

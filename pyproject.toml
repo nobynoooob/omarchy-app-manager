@@ -10,20 +10,24 @@ authors = [
 ]
 description = "A modern desktop application for managing AppImages and shortcuts"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Topic :: Desktop Environment",
     "Topic :: Utilities",
 ]
 dependencies = [
-    "PyQt6>=6.0.0",
+    # Pinned to the exact version verified in requirements.txt (with its
+    # recorded artifact hashes), so no dependency bytes are selected at
+    # install time.
+    "PyQt6==6.11.0",
 ]
 
 [project.urls]
